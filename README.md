@@ -1,4 +1,4 @@
-# 🌱🍊 JUZI-RAGnet
+# 🌱🍊 JUZI-RAGnet(demo)
 
 > **让语言模型从“种子”成长为“巨子”**  
 > *Cognitive Enhancement Layer for Language Models*
