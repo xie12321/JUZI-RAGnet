@@ -97,7 +97,7 @@ ollama serve
 # 命令行交互
 python main.py
 
-# 启动 API 服务
+# 启动 API 服务(未测试）
 python api.py
 ```
 
