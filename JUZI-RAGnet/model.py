@@ -1,30 +1,9 @@
 # model.py
-from langchain_ollama import ChatOllama, OllamaEmbeddings
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
+from config import LLM_MODEL, LLM_BASE_URL, LLM_API_KEY
 
-from config import LLM_MODEL, EMBED_MODEL
-
-# 基础 LLM
-llm = ChatOllama(model=LLM_MODEL, temperature=0.7)
-embeddings = OllamaEmbeddings(model=EMBED_MODEL)
-
-# 结构化输出模型定义
-class PlanStep(BaseModel):
-    tool: str = Field(description="工具名称")
-    params: Dict[str, Any] = Field(description="工具参数")
-    depends_on: Dict[str, str] | None = Field(
-        default=None,
-        description="参数依赖映射，键为当前步骤的参数名，值为前一步输出的字段名（格式：step_X.field 或 tool_name.field）"
-    )
-
-class Plan(BaseModel):
-    steps: List[PlanStep] = Field(description="执行步骤列表")
-
-class VerificationResult(BaseModel):
-    passed: bool = Field(description="是否通过验证")
-    feedback: str = Field(description="反馈信息")
-
-# 结构化 LLM
-structured_llm = llm.with_structured_output(Plan)
-verification_structured_llm = llm.with_structured_output(VerificationResult)
+if "ollama" in LLM_BASE_URL or "localhost" in LLM_BASE_URL:
+    llm = ChatOllama(model=LLM_MODEL, base_url=LLM_BASE_URL, temperature=0.7, reasoning=False)
+else:
+    llm = ChatOpenAI(model=LLM_MODEL, base_url=LLM_BASE_URL, api_key=LLM_API_KEY, temperature=0.7)
