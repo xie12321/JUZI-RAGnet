@@ -1,151 +1,75 @@
 import time
-import threading
-import sys
-import torch
-from dotenv import load_dotenv
-from langchain.memory import ConversationBufferMemory
-from langchain_core.messages import HumanMessage, AIMessage
-
-from model import llm, Plan
-from memory import memory_kb, experience_kb, reasoning_kb
-from graph.builder import build_graph
-from mid_term_memory import MidTermMemory
+from wiki_reader import build_index
+from controller import run_self_reflection
+from wiki_compiler import extract_knowledge_from_conversation
+from wiki_writer import write_to_wiki
 from logger_config import logger
 
-load_dotenv()
+def main():
+    build_index()
+    print("Cognitive Enhancer CLI. Type 'exit' to quit.")
+    history = []
+    conversation_counter = 0
+    conversation_text = ""  # 累积的对话文本，用于提取知识
 
-# 短期记忆
-memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+    try:
+        while True:
+            user_input = input("\nYou: ")
+            if user_input.lower() == "exit":
+                break
 
-# 中期记忆
-mid_mem = MidTermMemory(max_messages=30)
-mid_mem.restore_to_buffer_memory(memory)
+            # 调用增强层
+            result = run_self_reflection(user_input, external_info=None, history=history)
+            print(f"AI: {result}")
 
-# 构建 LangGraph 智能体
-app = build_graph()
+            # 更新历史
+            history.append({"role": "user", "content": user_input})
+            history.append({"role": "assistant", "content": result})
+            conversation_text += f"用户: {user_input}\nAI: {result}\n\n"
+            conversation_counter += 1
 
-# ---------- 超时处理 ----------
-IDLE_TIMEOUT = 600  # 10分钟
-timer = None
+            # 检查是否需要外部信息（由增强层输出的“需要的信息：”触发）
+            if "需要的信息：" in result:
+                info = input("External info (simulated): ")
+                result2 = run_self_reflection(user_input, external_info=info, history=history)
+                print(f"AI (after info): {result2}")
+                history.append({"role": "assistant", "content": result2})
+                conversation_text += f"外部信息: {info}\nAI: {result2}\n\n"
+                conversation_counter += 1  # 也计数为一次有效对话
 
-def memory_organize(is_timeout=False):
-    if is_timeout:
-        print("\n⏰ 长时间未操作，开始记忆整理...")
-    else:
-        print("\n🧹 开始记忆整理...")
-    # 收集短期记忆中的所有消息
-    short_term = []
-    for msg in memory.chat_memory.messages:
-        if isinstance(msg, HumanMessage):
-            short_term.append({
-                "role": "user",
-                "content": msg.content,
-                "timestamp": time.time()
-            })
-        elif isinstance(msg, AIMessage):
-            short_term.append({
-                "role": "assistant",
-                "content": msg.content,
-                "timestamp": time.time()
-            })
-    # 调用中期记忆的 LLM 整理方法
-    mid_mem.llm_organize(short_term)
-    print("✅ 记忆整理完成，程序退出。")
-    sys.exit(0)
+            # 每10次对话，沉淀知识
+            if conversation_counter >= 10:
+                logger.info("Ten conversations reached, extracting knowledge...")
+                knowledge = extract_knowledge_from_conversation(conversation_text)
+                timestamp = time.strftime("%Y%m%d_%H%M%S")
+                if knowledge["reasoning"]:
+                    write_to_wiki("reasoning", f"Session_{timestamp}_reasoning", knowledge["reasoning"])
+                if knowledge["experience"]:
+                    write_to_wiki("experience", f"Session_{timestamp}_experience", knowledge["experience"])
+                if knowledge["memory"]:
+                    write_to_wiki("memory", f"Session_{timestamp}_memory", knowledge["memory"])
+                # 重置计数器和文本
+                conversation_counter = 0
+                conversation_text = ""
 
-def reset_timer():
-    global timer
-    if timer:
-        timer.cancel()
-    timer = threading.Timer(IDLE_TIMEOUT, lambda: memory_organize(is_timeout=True))
-    timer.start()
+    except KeyboardInterrupt:
+        print("\nExiting...")
+    finally:
+        # 退出时，如果还有未沉淀的对话，也进行一次知识提取
+        if conversation_counter > 0:
+            logger.info("Extracting remaining knowledge before exit...")
+            knowledge = extract_knowledge_from_conversation(conversation_text)
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            if knowledge["reasoning"]:
+                write_to_wiki("reasoning", f"Exit_{timestamp}_reasoning", knowledge["reasoning"])
+            if knowledge["experience"]:
+                write_to_wiki("experience", f"Exit_{timestamp}_experience", knowledge["experience"])
+            if knowledge["memory"]:
+                write_to_wiki("memory", f"Exit_{timestamp}_memory", knowledge["memory"])
+        print("Goodbye!")
 
-# ---------- 主循环 ----------
-print("🎤 数字人已启动，输入 'exit' 退出")
-
-try:
-    while True:
-        reset_timer()
-        user_input = input("\n请输入内容：")
-        if user_input.lower() in ["exit", "quit"]:
-            memory_organize(is_timeout=False)
-            break
-
-        memory.chat_memory.add_user_message(user_input)
-        mid_mem.add_message("user", user_input)
-
-        initial_state = {
-            "user_input": user_input,
-            "messages": memory.chat_memory.messages.copy(),
-            "iteration": 0,
-            "plan": None,
-            "experiences": None,
-            "tool_results": None,
-            "tool_results_dict": None,
-            "verification_passed": None,
-            "verification_feedback": None,
-            "error_found": None,
-            "final_answer": None,
-        }
-
-        final_plan = None
-        final_verification_passed = None
-        final_answer = None
-
-        for step in app.stream(initial_state):
-            for node_name, node_output in step.items():
-                print(f"\n--- 节点：{node_name} ---")
-                if node_name == "planning":
-                    final_plan = node_output.get("plan")
-                    if final_plan:
-                        print(f"📋 规划：{final_plan[:200]}...")
-                elif node_name == "experience":
-                    experiences = node_output.get("experiences")
-                    if experiences:
-                        print(f"📚 经验：{experiences}")
-                elif node_name == "execute_tools":
-                    tool_results = node_output.get("tool_results")
-                    if tool_results:
-                        print(f"🔧 工具执行结果：{tool_results[:300]}...")
-                elif node_name == "verify":
-                    final_verification_passed = node_output.get("verification_passed")
-                    feedback = node_output.get("verification_feedback")
-                    print(f"✅ 验证通过：{final_verification_passed}")
-                    if feedback:
-                        print(f"💬 验证反馈：{feedback}")
-                elif node_name == "error_check":
-                    error_found = node_output.get("error_found")
-                    if error_found:
-                        print(f"⚠️ 发现错误：{node_output.get('error_info', '')}")
-                elif node_name == "output":
-                    final_answer = node_output.get("final_answer")
-                    print(f"🎤 最终回答：{final_answer}")
-
-        memory.chat_memory.add_ai_message(final_answer)
-        mid_mem.add_message("assistant", final_answer)
-        print(f"橘子🍊: {final_answer}")
-
-        # 存储成功经验
-        if final_plan and final_verification_passed:
-            try:
-                plan_obj = Plan.model_validate_json(final_plan)
-                if len(plan_obj.steps) > 0:
-                    experience_text = f"## 任务：{user_input}\n### 执行计划：\n{plan_obj.model_dump_json(indent=2)}\n### 结果：\n{final_answer}"
-                    experience_kb.add_texts(
-                        [experience_text],
-                        metadatas=[{"type": "success", "timestamp": time.time()}]
-                    )
-                    print("✅ 已将本次任务存入经验库")
-            except Exception as e:
-                print(f"存储经验失败: {e}")
-
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-
-except KeyboardInterrupt:
-    print("\n程序被用户中断")
-    memory_organize(is_timeout=False)
-
+if __name__ == "__main__":
+    main()
 finally:
     if timer:
         timer.cancel()
