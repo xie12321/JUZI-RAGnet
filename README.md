@@ -39,32 +39,26 @@
 
 ```mermaid
 graph TD
-    A[用户输入] --> B{是否需要工具?}
-    B -->|否| C[规划验证器]
-    B -->|是| D[规划节点]
-    D --> E[工具准备]
-    E --> C
-    C --> F{计划有效?}
-    F -->|否| B
-    F -->|是| G[经验库]
-    G --> H[执行工具]
-    H --> I[结果验证]
-    I --> J{通过?}
-    J -->|否| B
-    J -->|是| K[错误检查]
-    K --> L{错误?}
-    L -->|是| B
-    L -->|否| M[输出]
+    A[用户输入] --> B[推理思考节点]
+    B --> C[经验连接节点]
+    C --> D[反思检查节点]
+    D -->|否| B
+    D -->|是| E[最终输出节点]
+    F[推理库] --> B
+    G[经验库] --> C
+    H[记忆库] --> C
+    G --> D
+    H -->D
  ```
 
-## 🗂️ 分层记忆系统
+## 🗂️ 记忆整理系统
 
 ```mermaid
 graph LR
-    A[短期记忆] -->|退出/超时| B[中期记忆]
-    B -->|LLM 整理| C[长期记忆]
+    A[本轮对话] -->|退出/超时| B[记忆整理]
+    B -->|LLM 整理| C[推理库]
     B -->|LLM 整理| D[经验库]
-    E[推理库] -.->|规划/验证| A
+    B -->|LLM 整理| E[记忆库]
 ```
 
 ## 🚀 快速开始
@@ -120,24 +114,18 @@ print(response.choices[0].message.content)
 
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
-| `LLM_MODEL` | 使用的语言模型 | `fredrezones55/qwen3.5-opus:4b` |
-| `EMBED_MODEL` | 嵌入模型 | `shaw/dmeta-embedding-zh-small-q4:latest` |
+| `LLM_MODEL` | 使用的语言模型 | `qwen3.5:4b` |
+| `EMBED_MODEL` | 嵌入模型（可选） | `qwen3-embedding:0.6b` |
 | `MAX_ITERATIONS` | 自省循环最大迭代次数 | `3` |
-| `MID_TERM_MAX_MESSAGES` | 中期记忆最大条数 | `30` |
+| `MID_TERM_MAX_MESSAGES` | 记忆最大条数 | `10` |
 
 ---
 
 ## 🧩 扩展开发
 
-### 添加新工具
+### 添加新知识
 
-1. 在 `tools/` 下创建新文件，实现工具函数。
-2. 在 `graph/nodes.py` 中导入并添加到 `all_tools` 列表。
-3. 工具会自动被规划节点识别。
-
-### 自定义记忆整理
-
-修改 `mid_term_memory.py` 中的 `llm_organize` 方法，调整重要性判断逻辑或摘要生成规则。
+在 `wiki/` 下的不同文件夹下建立新的.md文件
 
 ---
 
