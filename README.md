@@ -75,17 +75,6 @@ graph LR
 
 
 
-### 1. 启动 Ollama
-
-```bash
-ollama pull fredrezones55/qwen3.5-opus:4b
-ollama pull shaw/dmeta-embedding-zh-small-q4:latest
-ollama serve
-```
-
----
-
-
 ---
 
 ## 🧩 扩展开发
