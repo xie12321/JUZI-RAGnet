@@ -5,7 +5,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![LangGraph](https://img.shields.io/badge/LangGraph-0.4.0+-green.svg)](https://github.com/langchain-ai/langgraph)
+[![LangChain](https://img.shields.io/badge/LangChain-0.4.0+-green.svg)](https://github.com/langchain-ai/langChain)
 
 ---
 
@@ -49,8 +49,19 @@ graph TD
     G --> D
     H -->D
  ```
+## 🔍 知识库检索系统
 
-## 🗂️ 记忆整理系统
+```mermaid
+graph TD
+    A[用户输入] --> B[混合检索]
+    B --> C[知识图谱拓展]
+    C --> D[知识编译]
+    D --> E[注入节点]
+    E --> F[节点输出] --> B
+    
+```
+
+## 🗂️ 记忆整理系统(目前需要通过接入Agent实现)
 
 ```mermaid
 graph LR
@@ -62,21 +73,9 @@ graph LR
 
 ## 🚀 快速开始
 
-### 1. 安装依赖
 
-```bash
-git clone https://github.com/yourusername/JUZI-RAGnet.git
-cd JUZI-RAGnet
-pip install -r requirements.txt
-```
 
-### 2. 配置环境（可选，用于联网搜索）
-
-```bash
-echo "TAVILY_API_KEY=your_tavily_api_key" > .env
-```
-
-### 3. 启动 Ollama
+### 1. 启动 Ollama
 
 ```bash
 ollama pull fredrezones55/qwen3.5-opus:4b
@@ -84,39 +83,8 @@ ollama pull shaw/dmeta-embedding-zh-small-q4:latest
 ollama serve
 ```
 
-### 4. 运行
-
-```bash
-# 命令行交互
-python main.py
-
-# 启动 API 服务(未测试）
-python api.py
-```
-
-### 5. 调用 API（OpenAI 兼容）
-
-```bash
-import openai
-client = openai.OpenAI(base_url="http://localhost:8000/v1", api_key="dummy")
-response = client.chat.completions.create(
-    model="enhancer",
-    messages=[{"role": "user", "content": "北京今天天气怎么样？"}]
-)
-print(response.choices[0].message.content)
-```
 ---
 
-## ⚙️ 配置说明
-
-编辑 `config.py` 可调整关键参数：
-
-| 参数 | 说明 | 默认值 |
-|------|------|--------|
-| `LLM_MODEL` | 使用的语言模型 | `qwen3.5:4b` |
-| `EMBED_MODEL` | 嵌入模型（可选） | `qwen3-embedding:0.6b` |
-| `MAX_ITERATIONS` | 自省循环最大迭代次数 | `3` |
-| `MID_TERM_MAX_MESSAGES` | 记忆最大条数 | `10` |
 
 ---
 
