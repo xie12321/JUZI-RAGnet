@@ -73,7 +73,42 @@ graph LR
 
 ## 🚀 快速开始
 
+### 1.下载与安装
+
+在`Releases`中选择版本并下载安装（目前仅支持Windows）
+
+### 2.客户端的使用
+
+#### 开始页面，可以在这里与增强后的模型对话。
+
 ![开始页面](./screenshots/chat.png)
+
+---
+
+#### 模型选择
+![目录](./screenshots/screenshots_1.png)
+在目录中，点击模型选择选项
+
+![本地模型选择](./screenshots/screenshots_2.png)
+
+![本地嵌入模型选择](./screenshots/screenshots_3.png)
+
+![云端模型选择](./screenshots/screenshots_4.png)
+你可以选择本地模型（目前仅支持ollama）和云端模型（由于增强层的性质，比一般调用费token）
+
+---
+
+#### wiki管理
+
+增强层的架构决定了其对模型的增强效果强依赖于知识库的质量，因此想要让模型获得大幅度的增强请务必按照`推理库`、`经验库`、`记忆库`来划分md文件。
+> Reasoning(推理库)：如存放逻辑学，思维和方式等方法论 \
+> Experience(经验库)：如存放规律总结，经验教训等实践论 \
+> Memory(记忆库)：存放自己的用户画像，可以让ai参考后输出符合自身条件的回答
+
+![知识库管理](./screenshots/wiki.png)
+当然，JUZI也支持导入已有的md文件，如obsidian。
+
+
 
 ---
 
