@@ -73,7 +73,7 @@ graph LR
 
 ## 🚀 快速开始
 
-![开始页面]（./screenshots/chat.png)
+![开始页面](./screenshots/chat.png)
 
 ---
 
