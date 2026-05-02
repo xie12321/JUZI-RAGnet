@@ -246,7 +246,7 @@ https://github.com/xie12321/JUZI-RAGnet/releases
 见README.md
 ```
 
-API 启动后即可通过 OpenAI 兼容接口调用（http://localhost:8000/v1/chat/completions），传入 `model="enhancer"` 即可启用增强。
+API 启动后即可通过 OpenAI 兼容接口调用（http://localhost:8000/v1/chat/completions），传入 `model="JUZI"` 即可启用增强。
 
 ---
 
