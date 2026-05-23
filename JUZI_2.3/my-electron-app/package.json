@@ -1,0 +1,53 @@
+{
+  "name": "my-electron-app",
+  "version": "1.0.0",
+  "main": "dist-electron/main.js",
+  "description": "JUZI - RAGent",
+  "author": "云浮自然",
+  "scripts": {
+    "dev": "vite",
+    "build:electron": "npx tsc -p tsconfig-electron.json",
+    "build": "vite build && npm run build:electron",
+    "electron:dev": "npm run build && electron .",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder"
+  },
+  "build": {
+    "productName": "JUZI",
+    "artifactName": "${productName} Setup ${version}.${ext}",
+    "icon": "public/icon.ico",
+    "extraResources": [
+      {
+        "from": "backend/dist",
+        "to": "backend"
+      }
+    ],
+    "appId": "com.yourapp.enhancer",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "win": {
+      "signAndEditExecutable": false
+    }
+  },
+  "dependencies": {
+    "@uiw/react-md-editor": "^4.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "electron": "41.3.0",
+    "electron-builder": "^26.8.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.9"
+  }
+}
